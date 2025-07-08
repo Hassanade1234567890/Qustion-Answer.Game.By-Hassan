@@ -1,258 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Ultimate Quiz Game</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #e0eafc, #cfdef3);
-      color: #222;
-      text-align: center;
       margin: 0;
-      padding: 0;
-      transition: background 0.5s, color 0.5s;
-    }
-    body.dark {
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: #eee;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
-    }
-    #darkModeBtn {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      background: #4caf50;
-      border: none;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .question-box {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.2);
-      margin-top: 20px;
-    }
-    body.dark .question-box {
-      background: #1e1e1e;
-    }
-    .options {
-      margin-top: 20px;
-    }
-    .option {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 5px;
-      border: none;
-      background: #e0e0e0;
-      transition: all 0.3s;
-    }
-    .option:hover {
-      background-color: #4caf50;
-      color: white;
-    }
-    .option.correct {
-      background-color: green !important;
-      color: white;
-    }
-    .option.wrong {
-      background-color: red !important;
-      color: white;
-    }
-    .status-grid {
+      font-family: Arial, sans-serif;
       display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
     }
-    .status-column {
+
+    :root {
+      --bg: #ffffff;
+      --text: #000000;
+      --card: #f0f0f0;
+      --correct: #4caf50;
+      --wrong: #f44336;
+    }
+
+    body.dark {
+      --bg: #121212;
+      --text: #ffffff;
+      --card: #1e1e1e;
+    }
+
+    .side-panel {
+      width: 120px;
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      align-content: flex-start;
+    }
+
+    .number-box {
+      width: 30px;
+      height: 30px;
+      background-color: #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .correct {
+      background-color: var(--correct) !important;
+      color: #fff;
+    }
+
+    .wrong {
+      background-color: var(--wrong) !important;
+      color: #fff;
+    }
+
+    .quiz-container {
+      flex: 1;
+      padding: 30px;
+    }
+
+    .question-box {
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
+    .options {
       display: flex;
       flex-direction: column;
+    }
+
+    .option {
+      background: var(--card);
+      padding: 12px;
+      margin: 5px 0;
+      border: 1px solid #888;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .option:hover {
+      background-color: var(--correct);
+      color: white;
+    }
+
+    #score-area {
+      display: none;
+      margin-top: 20px;
+    }
+
+    #leaderboard {
+      margin-top: 15px;
+    }
+
+    #timer {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 5px;
     }
-    .status-num {
-      width: 35px;
-      height: 35px;
-      line-height: 35px;
-      border-radius: 50%;
-      background: #ccc;
-      color: #000;
-    }
-    .status-num.correct {
-      background: green;
-      color: white;
-    }
-    .status-num.wrong {
-      background: red;
-      color: white;
-    }
-    #leaderboardList {
-      background: white;
-      padding: 10px;
-      border-radius: 5px;
-    }
-    body.dark #leaderboardList {
-      background: #1e1e1e;
+
+    .mode-toggle {
+      padding: 5px 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
-  <button id="darkModeBtn">Dark Mode</button>
-  <div class="container">
-    <h1>🧠 Ultimate Quiz Game</h1>
-    <div id="startScreen">
-      <input type="text" id="username" placeholder="Enter your name" />
-      <button onclick="startGame()">Start Game</button>
+  <div class="side-panel" id="progressPanel"></div>
+
+  <div class="quiz-container">
+    <div class="top-bar">
+      <div id="timer">Time: 10s</div>
+      <button class="mode-toggle" onclick="toggleMode()">Toggle Mode</button>
     </div>
-    <div class="question-box" id="quizBox" style="display:none;">
-      <div id="level"></div>
-      <div id="question"></div>
-      <div class="options" id="options"></div>
-      <div class="status-grid">
-        <div class="status-column" id="leftStatus"></div>
-        <div class="status-column" id="rightStatus"></div>
-      </div>
-    </div>
-    <div id="endScreen" style="display:none;">
-      <h2 id="finalScore"></h2>
+    <div class="question-box" id="question"></div>
+    <div class="options" id="options"></div>
+
+    <div id="score-area">
+      <h2>Game Over! Your Score: <span id="score"></span></h2>
+      <input type="text" id="username" placeholder="Your Name" />
       <button onclick="addToLeaderboard()">Add to Leaderboard</button>
-    </div>
-    <div id="leaderboard">
-      <h2>🏆 Leaderboard</h2>
-      <div id="leaderboardList"></div>
+      <div id="leaderboard"></div>
     </div>
   </div>
 
-  <audio id="bgMusic" src="storm-brain-beef-329903.mp3" autoplay loop></audio>
-
   <script>
     const questions = [
-      { question: "What is the currency of Pakistan?", options: ["Dollar", "Rupee", "Taka", "Dirham"], correct: "Rupee" },
-      { question: "What is the currency of the USA?", options: ["Euro", "Pound", "Dollar", "Peso"], correct: "Dollar" },
-      { question: "What is the currency of Brazil?", options: ["Real", "Peso", "Ruble", "Rupee"], correct: "Real" },
-      { question: "What is the currency of Iran?", options: ["Riyal", "Toman", "Dinar", "Ruble"], correct: "Toman" },
-      { question: "What is the currency of Russia?", options: ["Ruble", "Euro", "Won", "Dirham"], correct: "Ruble" },
-      { question: "What is the currency of Afghanistan?", options: ["Rupee", "Afghani", "Taka", "Lira"], correct: "Afghani" },
-      { question: "Capital of Pakistan?", options: ["Lahore", "Islamabad", "Karachi", "Peshawar"], correct: "Islamabad" },
-      { question: "Capital of Australia?", options: ["Sydney", "Melbourne", "Canberra", "Perth"], correct: "Canberra" },
-      { question: "Capital of USA?", options: ["New York", "Washington D.C.", "Los Angeles", "Chicago"], correct: "Washington D.C." },
-      { question: "Capital of India?", options: ["Mumbai", "Delhi", "New Delhi", "Kolkata"], correct: "New Delhi" },
-      { question: "Which country uses Yen?", options: ["China", "Japan", "Korea", "Thailand"], correct: "Japan" },
-      { question: "Which country uses Euro?", options: ["UK", "Germany", "USA", "India"], correct: "Germany" },
-      { question: "Largest continent?", options: ["Africa", "Asia", "Europe", "Antarctica"], correct: "Asia" },
-      { question: "Which planet is closest to the sun?", options: ["Earth", "Mercury", "Venus", "Mars"], correct: "Mercury" },
-      { question: "Which is the smallest prime number?", options: ["1", "2", "3", "5"], correct: "2" },
-      { question: "How many sides does a hexagon have?", options: ["5", "6", "7", "8"], correct: "6" },
-      { question: "Which ocean is the largest?", options: ["Atlantic", "Indian", "Pacific", "Arctic"], correct: "Pacific" },
-      { question: "Fastest land animal?", options: ["Tiger", "Leopard", "Cheetah", "Horse"], correct: "Cheetah" },
-      { question: "Who invented the light bulb?", options: ["Einstein", "Edison", "Newton", "Tesla"], correct: "Edison" },
-      { question: "What gas do plants use for photosynthesis?", options: ["Oxygen", "Carbon Dioxide", "Hydrogen", "Nitrogen"], correct: "Carbon Dioxide" },
-      { question: "Which country has Eiffel Tower?", options: ["Italy", "France", "Germany", "Spain"], correct: "France" },
-      { question: "How many continents are there?", options: ["5", "6", "7", "8"], correct: "7" },
-      { question: "Which metal is liquid at room temp?", options: ["Iron", "Gold", "Mercury", "Zinc"], correct: "Mercury" },
-      { question: "How many hours in 3 days?", options: ["48", "72", "36", "60"], correct: "72" },
-      { question: "What is H2O?", options: ["Oxygen", "Hydrogen", "Salt", "Water"], correct: "Water" },
-      { question: "Which is the tallest mountain?", options: ["K2", "Everest", "Makalu", "Nanga Parbat"], correct: "Everest" },
-      { question: "How many legs does a spider have?", options: ["6", "8", "10", "12"], correct: "8" },
-      { question: "What is the boiling point of water?", options: ["90°C", "100°C", "110°C", "120°C"], correct: "100°C" },
-      { question: "How many minutes in 2 hours?", options: ["100", "120", "150", "90"], correct: "120" },
-      { question: "What is 15 x 2?", options: ["30", "20", "25", "35"], correct: "30" }
+      { q: 'Currency of Pakistan?', a: 'Rupee', o: ['Rupee', 'Taka', 'Dinar', 'Peso'] },
+      { q: 'Currency of USA?', a: 'Dollar', o: ['Dollar', 'Euro', 'Pound', 'Yen'] },
+      { q: 'Currency of Brazil?', a: 'Real', o: ['Peso', 'Real', 'Dollar', 'Lira'] },
+      { q: 'Currency of Iran?', a: 'Rial', o: ['Rial', 'Toman', 'Lira', 'Dinar'] },
+      { q: 'Currency of Russia?', a: 'Ruble', o: ['Ruble', 'Euro', 'Dinar', 'Krona'] },
+      { q: 'Currency of Afghanistan?', a: 'Afghani', o: ['Afghani', 'Taka', 'Rial', 'Dirham'] },
+      { q: 'Square root of 144?', a: '12', o: ['12', '14', '16', '10'] },
+      { q: '2^5 = ?', a: '32', o: ['32', '16', '64', '24'] },
+      { q: 'Fastest animal?', a: 'Cheetah', o: ['Cheetah', 'Leopard', 'Tiger', 'Lion'] },
+      { q: 'First prime number?', a: '2', o: ['2', '3', '1', '5'] },
+      { q: 'Result of 9*9?', a: '81', o: ['81', '72', '99', '90'] },
+      { q: 'Current unit of wire?', a: 'Ampere', o: ['Ampere', 'Volt', 'Watt', 'Ohm'] },
+      { q: 'Symbol of Gold?', a: 'Au', o: ['Au', 'Ag', 'Gd', 'Pb'] },
+      { q: 'Largest ocean?', a: 'Pacific', o: ['Pacific', 'Atlantic', 'Indian', 'Arctic'] },
+      { q: 'Planet known as red?', a: 'Mars', o: ['Mars', 'Jupiter', 'Venus', 'Neptune'] },
+      { q: '5th planet from Sun?', a: 'Jupiter', o: ['Jupiter', 'Saturn', 'Mars', 'Earth'] },
+      { q: 'H2O is?', a: 'Water', o: ['Water', 'Hydrogen', 'Oxygen', 'Ice'] },
+      { q: 'Keyboard shortcut for copy?', a: 'Ctrl+C', o: ['Ctrl+C', 'Ctrl+X', 'Ctrl+V', 'Ctrl+Z'] },
+      { q: 'Triangle angle total?', a: '180', o: ['180', '360', '90', '120'] },
+      { q: 'Hardest natural substance?', a: 'Diamond', o: ['Diamond', 'Steel', 'Gold', 'Quartz'] },
+      { q: 'Google CEO in 2023?', a: 'Sundar Pichai', o: ['Sundar Pichai', 'Satya Nadella', 'Elon Musk', 'Tim Cook'] },
+      { q: 'First periodic table element?', a: 'Hydrogen', o: ['Hydrogen', 'Helium', 'Oxygen', 'Lithium'] },
+      { q: 'Sun rises from?', a: 'East', o: ['East', 'West', 'North', 'South'] },
+      { q: 'Capital of UAE?', a: 'Abu Dhabi', o: ['Lahore', 'Islamabad', 'Abu Dhabi', 'Sayalcoat'] },
+      { q: 'RAM stands for?', a: 'Random Access Memory', o: ['Random Access Memory', 'Read Access Memory', 'Run Access Machine', 'Remote Access Method'] },
+      { q: 'Shape of stop sign?', a: 'Octagon', o: ['Octagon', 'Hexagon', 'Square', 'Circle'] },
+      { q: 'Animal with trunk?', a: 'Elephant', o: ['Elephant', 'Hippo', 'Rhino', 'Giraffe'] },
+      { q: 'Capital of France?', a: 'Paris', o: ['Paris', 'Berlin', 'London', 'Madrid'] },
+      { q: 'Number of continents?', a: '7', o: ['7', '6', '5', '8'] },
+      { q: 'Fastest bird?', a: 'Peregrine Falcon', o: ['Peregrine Falcon', 'Eagle', 'Sparrow', 'Owl'] }
     ];
 
-    let current = 0, correctCount = 0, wrongCount = 0, user = '';
-    const leftStatus = document.getElementById("leftStatus");
-    const rightStatus = document.getElementById("rightStatus");
-    const leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+    let current = 0;
+    let score = 0;
+    let timerInterval;
 
-    function startGame() {
-      user = document.getElementById("username").value.trim();
-      if (!user) return alert("Enter your name first!");
-      document.getElementById("startScreen").style.display = "none";
-      document.getElementById("quizBox").style.display = "block";
-      renderStatusIndicators();
-      loadQuestion();
+    const questionBox = document.getElementById('question');
+    const optionsBox = document.getElementById('options');
+    const progressPanel = document.getElementById('progressPanel');
+    const timerEl = document.getElementById('timer');
+
+    for (let i = 1; i <= 30; i++) {
+      const box = document.createElement('div');
+      box.className = 'number-box';
+      box.innerText = i;
+      progressPanel.appendChild(box);
     }
 
-    function renderStatusIndicators() {
-      for (let i = 1; i <= 30; i++) {
-        const span = document.createElement("span");
-        span.innerText = i;
-        span.className = "status-num";
-        span.id = "q" + i;
-        if (i <= 15) leftStatus.appendChild(span);
-        else rightStatus.appendChild(span);
-      }
-    }
+    const numberBoxes = document.querySelectorAll('.number-box');
 
     function loadQuestion() {
-      if (current >= questions.length) return endGame();
-      document.getElementById("level").innerText = `Question ${current + 1} of 30`;
-      document.getElementById("question").innerText = questions[current].question;
-      const optionsDiv = document.getElementById("options");
-      optionsDiv.innerHTML = "";
-      questions[current].options.forEach(opt => {
-        const btn = document.createElement("button");
-        btn.className = "option";
-        btn.innerText = opt;
-        btn.onclick = () => checkAnswer(opt, btn);
-        optionsDiv.appendChild(btn);
+      if (current >= questions.length) {
+        clearInterval(timerInterval);
+        document.getElementById('score-area').style.display = 'block';
+        document.getElementById('score').innerText = score;
+        return;
+      }
+
+      questionBox.innerText = `${current + 1}. ${questions[current].q}`;
+      optionsBox.innerHTML = '';
+      let shuffled = [...questions[current].o].sort(() => Math.random() - 0.5);
+
+      shuffled.forEach(opt => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.innerText = opt;
+        div.onclick = () => {
+          clearInterval(timerInterval);
+          selectAnswer(opt);
+        };
+        optionsBox.appendChild(div);
       });
+
+      startTimer();
     }
 
-    function checkAnswer(selected, btn) {
-      const correct = questions[current].correct;
-      const allOptions = document.querySelectorAll(".option");
-      allOptions.forEach(b => b.disabled = true);
-      if (selected === correct) {
-        btn.classList.add("correct");
-        correctCount++;
-        document.getElementById("q" + (current + 1)).classList.add("correct");
-      } else {
-        btn.classList.add("wrong");
-        wrongCount++;
-        document.getElementById("q" + (current + 1)).classList.add("wrong");
-      }
-      setTimeout(() => {
-        current++;
-        loadQuestion();
+    function startTimer() {
+      let time = 10;
+      timerEl.innerText = `Time: ${time}s`;
+      timerInterval = setInterval(() => {
+        time--;
+        timerEl.innerText = `Time: ${time}s`;
+        if (time <= 0) {
+          clearInterval(timerInterval);
+          numberBoxes[current].classList.add('wrong');
+          current++;
+          setTimeout(loadQuestion, 1000);
+        }
       }, 1000);
     }
 
-    function endGame() {
-      document.getElementById("quizBox").style.display = "none";
-      document.getElementById("endScreen").style.display = "block";
-      document.getElementById("finalScore").innerText = `${user}, your score: ✅ ${correctCount} | ❌ ${wrongCount}`;
+    function selectAnswer(selected) {
+      const correct = questions[current].a;
+      if (selected === correct) {
+        numberBoxes[current].classList.add('correct');
+        score++;
+      } else {
+        numberBoxes[current].classList.add('wrong');
+      }
+      current++;
+      setTimeout(loadQuestion, 1000);
     }
 
     function addToLeaderboard() {
-      leaderboard.push({ name: user, score: correctCount });
-      leaderboard.sort((a, b) => b.score - a.score);
-      localStorage.setItem("leaderboard", JSON.stringify(leaderboard.slice(0, 10)));
-      showLeaderboard();
+      const name = document.getElementById('username').value;
+      const leaderboard = document.getElementById('leaderboard');
+      const entry = document.createElement('div');
+      entry.innerText = `${name}: ${score}`;
+      leaderboard.appendChild(entry);
     }
 
-    function showLeaderboard() {
-      const list = document.getElementById("leaderboardList");
-      list.innerHTML = leaderboard.map((entry, i) => `<p>${i + 1}. ${entry.name} - ${entry.score}</p>`).join("");
+    function toggleMode() {
+      document.body.classList.toggle('dark');
     }
 
-    document.getElementById("darkModeBtn").onclick = () => {
-      document.body.classList.toggle("dark");
-      document.getElementById("darkModeBtn").innerText =
-        document.body.classList.contains("dark") ? "Light Mode" : "Dark Mode";
-    };
-
-    showLeaderboard();
+    loadQuestion();
   </script>
 </body>
 </html>
